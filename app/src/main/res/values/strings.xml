@@ -1,0 +1,45 @@
+<resources>
+    <string name="app_name">LandmarkGuide</string>
+
+    <!-- LOGIN PAGE -->
+    <string name="username_placeholder">Email Address</string>
+    <string name="password_placeholder">Password</string>
+    <string name="password_confirm">Confirm Password</string>
+    <string name="login_btn_placeholder">Login</string>
+    <string name="register_in">Register</string>
+    <string name="text_next">Next</string>
+    <string name="reset_password_btn_placeholder">Send Reset Link</string>
+    <string name="login_page_title">Login</string>
+    <string name="register_button_text">Register</string>
+    <string name="dismiss_register_dialog">Dismiss</string>
+
+    <string name="dialog_ok">Ok</string>
+    <string name="dialog_reset_sign_in_yes">RESET</string>
+    <string name="dialog_cancel">CANCEL</string>
+    <string name="dialog_retry">RETRY</string>
+    <string name="register"><u><b><i>No account yet? Register</i></b></u></string>
+    <string name="forgot_pass"><u><b><i>Or forgot password?</i></b></u></string>
+    <string name="sign_up_hint">Register</string>
+
+    <string-array name="landmark_entries">
+        <item>Popular</item>
+        <item>Modern</item>
+        <item>Historical</item>
+    </string-array>
+
+    <string-array name="landmark_entries_values">
+        <item>Popular</item>
+        <item>Modern</item>
+        <item>Historical</item>
+    </string-array>
+
+    <string-array name="metric_entries">
+        <item>KM</item>
+        <item>MILES</item>
+    </string-array>
+
+    <string-array name="metric_entries_values">
+        <item>KM</item>
+        <item>MILES</item>
+    </string-array>
+</resources>

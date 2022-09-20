@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--below line is to create preference category-->
+    <PreferenceCategory android:title="General">
+        <ListPreference
+            android:key="landmark"
+            android:defaultValue="Popular"
+            android:title="Select preferred landmark"
+            android:summary="Select the preferred landmark that will be shown"
+            android:entries="@array/landmark_entries"
+            android:entryValues="@array/landmark_entries_values">
+        </ListPreference>
+        <ListPreference
+            android:key="metric"
+            android:defaultValue="KM"
+            android:title="Select preferred metric"
+            android:summary="Select preferred metric system that will used"
+            android:entries="@array/metric_entries"
+            android:entryValues="@array/metric_entries_values">
+        </ListPreference>
+    </PreferenceCategory>
+
+</PreferenceScreen>
