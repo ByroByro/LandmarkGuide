@@ -26,4 +26,8 @@ interface APIInterface {
     @GET("user/get_features.php")
     fun getLandmarks(): Call<ResponseBody?>?
 
+    // save favorite
+    @Headers("Content-Type:application/json")
+    @POST("user/save_favorite.php")
+    fun saveFavorite(@Body body: String): Call<ResponseBody?>?
 }

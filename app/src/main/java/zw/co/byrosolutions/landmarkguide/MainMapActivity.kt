@@ -19,6 +19,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -31,10 +32,13 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.ResponseBody
@@ -90,24 +94,12 @@ class MainMapActivity : AppCompatActivity(), OnMapReadyCallback {
             Places.initialize(applicationContext, apiKey)
         }
 
-        // Initializing Map
-        // val mapFragment =
-        //    supportFragmentManager.findFragmentById(R.id.map_fragment) as SupportMapFragment
-        // mapFragment.getMapAsync(this)
-
         // Initializing fused location client
         fusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(this@MainMapActivity)
 
-        // fetch user's current location
-        // fetchLocation()
-
         // get the landmarks
         getLandmarks()
-
-        // test estimates
-        // estimateTimeAndDistance("-18.0261243", "31.1156306", "-17.9982453", "31.0777566", apiKey)
-
     }
 
     private val bicycleIcon: BitmapDescriptor by lazy {
@@ -117,177 +109,282 @@ class MainMapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // add markers to map
     private fun addMarkers(googleMap: GoogleMap) {
-        places.forEach { place ->
-            val latLng = LatLng(place!!.latitude!!.toDouble(), place!!.longtude!!.toDouble())
-            if (place.type.equals(prefs.getLandmark(), true)) {
-                val marker = googleMap.addMarker(
-                    MarkerOptions()
-                        .title(place.name)
-                        .position(latLng)
-                        .icon(bicycleIcon)
-                )
-                // Set place as the tag on the marker object so it can be referenced within
-                // MarkerInfoWindowAdapter
-                marker.tag = place
+        try {
+            places.forEach { place ->
+                val latLng = LatLng(place!!.latitude!!.toDouble(), place!!.longtude!!.toDouble())
+                if (place.type.equals(prefs.getLandmark(), true)) {
+                    val marker = googleMap.addMarker(
+                        MarkerOptions()
+                            .title(place.name)
+                            .position(latLng)
+                            .icon(bicycleIcon)
+                    )
+                    // Set place as the tag on the marker object so it can be referenced within
+                    // MarkerInfoWindowAdapter
+                    marker.tag = place
+                }
             }
+        } catch (e: Exception) {
+            methods.alertUser("Error", e.toString(), this)
         }
     }
 
     // fetch user current location
     @SuppressLint("MissingPermission")
     private fun fetchLocation() {
+        try {
+            // check permissions
+            if (ActivityCompat.checkSelfPermission(
+                    this, Manifest.permission.ACCESS_FINE_LOCATION
+                ) ==
+                PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    this, Manifest.permission.ACCESS_COARSE_LOCATION
+                ) ==
+                PackageManager.PERMISSION_GRANTED
+            ) {
 
-        // check permissions
-        if (ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_FINE_LOCATION
-            ) ==
-            PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_COARSE_LOCATION
-            ) ==
-            PackageManager.PERMISSION_GRANTED
-        ) {
+                // check if location is enabled
+                if (isLocationEnabled()) {
 
-            // check if location is enabled
-            if (isLocationEnabled()) {
+                    val task = fusedLocationProviderClient.lastLocation
+                    task.addOnSuccessListener {
+                        try {
 
-                val task = fusedLocationProviderClient.lastLocation
-                task.addOnSuccessListener {
-                    try {
+                            // if location is not equal to null then show it
+                            if (it != null) {
+                                currentLocation = it
+                                Toast.makeText(
+                                    applicationContext, currentLocation.latitude.toString() + "" +
+                                            currentLocation.longitude, Toast.LENGTH_SHORT
+                                ).show()
 
-                        // if location is not equal to null then show it
-                        if (it != null) {
-                            currentLocation = it
-                            Toast.makeText(
-                                applicationContext, currentLocation.latitude.toString() + "" +
-                                        currentLocation.longitude, Toast.LENGTH_SHORT
-                            ).show()
-
-                            // map initialized here
-                            // val supportMapFragment =
-                            //   (supportFragmentManager.findFragmentById(R.id.map_fragment) as
-                            //            SupportMapFragment?)!!
-                            // supportMapFragment.getMapAsync(this@MainMapActivity)
-                            val latLng = LatLng(currentLocation.latitude, currentLocation.longitude)
-                            mMap.addMarker(MarkerOptions().position(latLng).title("You are here"))
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10F))
-                        } else {
-                            // request new location
-                            requestNewLocationData()
-                            Toast.makeText(
-                                this@MainMapActivity,
-                                "Location is null",
-                                Toast.LENGTH_SHORT
-                            )
-                                .show()
-                            // tell user hint to start google maps app
+                                // map initialized here
+                                // val supportMapFragment =
+                                //   (supportFragmentManager.findFragmentById(R.id.map_fragment) as
+                                //            SupportMapFragment?)!!
+                                // supportMapFragment.getMapAsync(this@MainMapActivity)
+                                val latLng =
+                                    LatLng(currentLocation.latitude, currentLocation.longitude)
+                                mMap.addMarker(
+                                    MarkerOptions().position(latLng).title("You are here")
+                                )
+                                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10F))
+                            } else {
+                                // request new location
+                                requestNewLocationData()
+                                Toast.makeText(
+                                    this@MainMapActivity,
+                                    "Location is null",
+                                    Toast.LENGTH_SHORT
+                                )
+                                    .show()
+                                // tell user hint to start google maps app
+                            }
+                        } catch (e: Exception) {
+                            methods.alertUser("Error", e.toString(), this@MainMapActivity)
                         }
-                    } catch (e: Exception) {
-                        methods.alertUser("Error", e.toString(), this@MainMapActivity)
                     }
+                } else {
+                    // open intent to enable location
+                    Toast.makeText(this, "Turn on location", Toast.LENGTH_LONG).show()
+                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    startActivity(intent)
                 }
             } else {
-                // open intent to enable location
-                Toast.makeText(this, "Turn on location", Toast.LENGTH_LONG).show()
-                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                startActivity(intent)
-            }
-        } else {
 
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), permissionCode
-            )
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), permissionCode
+                )
+            }
+        } catch (e: Exception) {
+            methods.alertUser("Error", e.toString(), this)
         }
     }
 
     // on map ready
     override fun onMapReady(googleMap: GoogleMap?) {
-        // initialise map object
-        if (googleMap != null) {
-            mMap = googleMap
-        }
+        try {
+            // initialise map object
+            if (googleMap != null) {
+                mMap = googleMap
+            }
 
-        // val latLng = LatLng(currentLocation.latitude, currentLocation.longitude)
-        // val markerOptions = MarkerOptions().position(latLng).title("You are here!")
-        // googleMap?.animateCamera(CameraUpdateFactory.newLatLng(latLng))
-        // googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 5f))
-        // googleMap?.addMarker(markerOptions)
+            // get current location
+            fetchLocation()
 
-        // get current location
-        fetchLocation()
-
-        // adding on click listener to marker of google maps.
-        mMap.setOnMarkerClickListener { marker ->
-            // on marker click we are getting the title of our marker
-            // which is clicked and displaying it in a toast message.
-            val markerName = marker.title
-            var markerLatLong = LatLng(0.0, 0.0)
-            places.forEach {
-                if (it!!.name == markerName) {
-                    markerLatLong = LatLng(it!!.latitude.toDouble(), it!!.longtude.toDouble())
-                    return@forEach
+            // adding on click listener to marker of google maps.
+            mMap.setOnMarkerClickListener { marker ->
+                // on marker click we are getting the title of our marker
+                // which is clicked and displaying it in a toast message.
+                val markerName = marker.title
+                // var thisPlace = Landmark(0,"","","","","","")
+                var thisPlace: Landmark? = null
+                var markerLatLong = LatLng(0.0, 0.0)
+                places.forEach {
+                    if (it!!.name == markerName) {
+                        thisPlace = it
+                        markerLatLong = LatLng(it!!.latitude.toDouble(), it!!.longtude.toDouble())
+                        return@forEach
+                    }
                 }
-            }
 
-            // show a sign up bottom dialog
-            val dialog = BottomSheetDialog(this,R.style.SheetDialog)
-            val view = layoutInflater.inflate(R.layout.actions_info_contents, null)
-            // widgets on bottom dialog
-            val btnRoute = view.findViewById<Button>(R.id.btnDrawRoute)
-            val btnEstimates = view.findViewById<Button>(R.id.btnEstTimeDistance)
-            val btnDirections = view.findViewById<Button>(R.id.btnDirections)
+                // show a sign up bottom dialog
+                val dialog = BottomSheetDialog(this, R.style.SheetDialog)
+                val view = layoutInflater.inflate(R.layout.actions_info_contents, null)
+                // widgets on bottom dialog
+                val btnRoute = view.findViewById<ImageButton>(R.id.btnDrawRoute)
+                val btnEstimates = view.findViewById<ImageButton>(R.id.btnEstTimeDistance)
+                val btnDirections = view.findViewById<ImageButton>(R.id.btnDirections)
+                val btnSetFav = view.findViewById<ImageButton>(R.id.btnSetFav)
 
+                // button route
+                btnRoute.setOnClickListener {
+                    // draw route on map
+                    drawRoute(markerLatLong.latitude, markerLatLong.longitude)
+                }
 
-            // button route
-            btnRoute.setOnClickListener {
-                // draw route on map
-                drawRoute(markerLatLong.latitude, markerLatLong.longitude)
-            }
+                // button estimates
+                btnEstimates.setOnClickListener {
+                    // retrieve estimates form google api
+                    // check current location
+                    if (currentLocation != null) {
+                        estimateTimeAndDistance(
+                            currentLocation.latitude.toString(),
+                            currentLocation.longitude.toString(),
+                            markerLatLong.latitude.toString(),
+                            markerLatLong.longitude.toString(),
+                            apiKey
+                        )
+                    } else {
+                        Toast.makeText(
+                            this@MainMapActivity,
+                            "Please make sure your current location is update!",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
 
-            // button estimates
-            btnEstimates.setOnClickListener {
-                // retrieve estimates form google api
-
-                // check current location
-                if (currentLocation != null) {
-                    estimateTimeAndDistance(
+                // button directions
+                btnDirections.setOnClickListener {
+                    getDirections(
                         currentLocation.latitude.toString(),
                         currentLocation.longitude.toString(),
                         markerLatLong.latitude.toString(),
                         markerLatLong.longitude.toString(),
                         apiKey
                     )
-                } else {
-                    Toast.makeText(
-                        this@MainMapActivity,
-                        "Please make sure your current location is update!",
-                        Toast.LENGTH_LONG
-                    ).show()
                 }
+
+                // button set as favorite
+                btnSetFav.setOnClickListener {
+                    saveAsFavorite(thisPlace?.id.toString())
+                }
+
+                // disallow cancellation from touch outside
+                dialog.setCanceledOnTouchOutside(true)
+                dialog.setCancelable(true)
+                // dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+                //set content
+                dialog.setContentView(view)
+                // dialog show
+                dialog.show()
+
+                Toast.makeText(
+                    this@MainMapActivity,
+                    "Clicked location is $markerName",
+                    Toast.LENGTH_SHORT
+                )
+                    .show()
+                false
             }
+        } catch (e: Exception) {
+            methods.alertUser("Error", e.toString(), this)
+        }
+    }
 
-            // button directions
-            btnDirections.setOnClickListener {
+    private fun saveAsFavorite(locationId: String) {
+        try {
+            val preferenceProvider = PreferenceProvider(this)
 
-            }
+            var jsonObject = JSONObject()
+            jsonObject.put("user_id", preferenceProvider.getUserId())
+            jsonObject.put("location_id", locationId)
 
-            // disallow cancellation from touch outside
-            dialog.setCanceledOnTouchOutside(true)
-            dialog.setCancelable(true)
-            // dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+            val apiClient = APIClient().getInstance().create(
+                APIInterface::class.java
+            )
+            var attendance: Call<ResponseBody?>? =
+                apiClient.saveFavorite(jsonObject.toString())
 
-            //set content
-            dialog.setContentView(view)
-            // dialog show
+            dialog.setTitle("Saving favorite")
+            dialog.setMessage("Uploading favorite.Please wait...")
+            dialog.setCanceledOnTouchOutside(false)
             dialog.show()
 
-            Toast.makeText(
-                this@MainMapActivity,
-                "Clicked location is $markerName",
-                Toast.LENGTH_SHORT
-            )
-                .show()
-            false
+            attendance?.enqueue(object : Callback<ResponseBody?> {
+                override fun onResponse(
+                    call: Call<ResponseBody?>,
+                    response: Response<ResponseBody?>
+                ) {
+                    dialog.dismiss()
+                    if (response.isSuccessful) {
+                        val res = response.body()?.string()
+                        val jsonObject = JSONObject(res)
+                        when (val message = jsonObject.getString("message")) {
+                            "Exists" -> {
+                                Toast.makeText(
+                                    this@MainMapActivity,
+                                    "Already a favorite",
+                                    Toast.LENGTH_LONG
+                                )
+                                    .show()
+                            }
+                            "Success" -> {
+                                Toast.makeText(
+                                    this@MainMapActivity,
+                                    "Successfully saved favorite",
+                                    Toast.LENGTH_LONG
+                                )
+                                    .show()
+                            }
+                            "Failed" -> {
+                                Toast.makeText(
+                                    this@MainMapActivity,
+                                    "Failed to save favorite, try again!",
+                                    Toast.LENGTH_LONG
+                                )
+                                    .show()
+                            }
+                            else -> {
+                                Toast.makeText(
+                                    this@MainMapActivity,
+                                    message,
+                                    Toast.LENGTH_LONG
+                                )
+                                    .show()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(this@MainMapActivity, "Request failed", Toast.LENGTH_LONG)
+                            .show()
+                    }
+                }
+
+                override fun onFailure(call: Call<ResponseBody?>, t: Throwable) {
+                    dialog.dismiss()
+                    methods.alertUser(
+                        "Response",
+                        "A network error occurred. The request failed, please try again after a moment!",
+                        this@MainMapActivity
+                    )
+                }
+
+            })
+        } catch (e: Exception) {
+            dialog.dismiss()
+            methods.alertUser("Error", e.toString(), this)
         }
     }
 
@@ -423,17 +520,21 @@ class MainMapActivity : AppCompatActivity(), OnMapReadyCallback {
     // from previous location
     @SuppressLint("MissingPermission")
     private fun requestNewLocationData() {
-        val mLocationRequest = LocationRequest()
-        mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        mLocationRequest.interval = 0
-        mLocationRequest.fastestInterval = 0
-        mLocationRequest.numUpdates = 1
+        try {
+            val mLocationRequest = LocationRequest()
+            mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            mLocationRequest.interval = 0
+            mLocationRequest.fastestInterval = 0
+            mLocationRequest.numUpdates = 1
 
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-        fusedLocationProviderClient.requestLocationUpdates(
-            mLocationRequest, mLocationCallback,
-            Looper.myLooper()
-        )
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+            fusedLocationProviderClient.requestLocationUpdates(
+                mLocationRequest, mLocationCallback,
+                Looper.myLooper()
+            )
+        } catch (e: Exception) {
+            methods.alertUser("Error", e.toString(), this)
+        }
     }
 
     // If current location could not be located, use last location
@@ -486,14 +587,14 @@ class MainMapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         override fun onPostExecute(result: List<List<LatLng>>) {
-            val lineoption = PolylineOptions()
+            val lineOption = PolylineOptions()
             for (i in result.indices) {
-                lineoption.addAll(result[i])
-                lineoption.width(10f)
-                lineoption.color(Color.GREEN)
-                lineoption.geodesic(true)
+                lineOption.addAll(result[i])
+                lineOption.width(10f)
+                lineOption.color(Color.GREEN)
+                lineOption.geodesic(true)
             }
-            mMap.addPolyline(lineoption)
+            mMap.addPolyline(lineOption)
         }
     }
 
@@ -531,21 +632,25 @@ class MainMapActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     // draw route from current location to selected location
-    fun drawRoute(lat: Double, long: Double) {
-        if (currentLocation != null) {
-            mapFragment.getMapAsync {
-                mMap = it
-                val originLocation = LatLng(currentLocation.latitude, currentLocation.longitude)
-                mMap.addMarker(MarkerOptions().position(originLocation))
-                val destinationLocation = LatLng(lat, long)
-                mMap.addMarker(MarkerOptions().position(destinationLocation))
-                val url = getDirectionURL(originLocation, destinationLocation, apiKey)
-                GetDirection(url).execute()
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(originLocation, 14F))
+    private fun drawRoute(lat: Double, long: Double) {
+        try {
+            if (currentLocation != null) {
+                mapFragment.getMapAsync {
+                    mMap = it
+                    val originLocation = LatLng(currentLocation.latitude, currentLocation.longitude)
+                    mMap.addMarker(MarkerOptions().position(originLocation))
+                    val destinationLocation = LatLng(lat, long)
+                    mMap.addMarker(MarkerOptions().position(destinationLocation))
+                    val url = getDirectionURL(originLocation, destinationLocation, apiKey)
+                    GetDirection(url).execute()
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(originLocation, 14F))
+                }
+            } else {
+                Toast.makeText(this, "Please get your current location first!", Toast.LENGTH_SHORT)
+                    .show()
             }
-        } else {
-            Toast.makeText(this, "Please get your current location first!", Toast.LENGTH_SHORT)
-                .show()
+        } catch (e: Exception) {
+            methods.alertUser("Error", e.toString(), this)
         }
     }
 
@@ -557,51 +662,188 @@ class MainMapActivity : AppCompatActivity(), OnMapReadyCallback {
         dLong: String,
         key: String
     ) {
-        val url =
-            "https://maps.googleapis.com/maps/api/distancematrix/json?origins=${oLat},${oLong}" +
-                    "&destinations=${dLat},${dLong}" +
-                    "&units=imperial" +
-                    "&key=$key"
 
-        val client = OkHttpClient()
-        val request = Request.Builder().url(url).build()
-        CoroutineScope(IO).launch {
-            val response = client.newCall(request).execute()
-            val data = response.body!!.string()
-            Log.d("Est", data.toString())
+        // try catch
+        try {
+            // progress dialog
+            val dialog = ProgressDialog(this)
+            dialog.setTitle("Processing")
+            dialog.setCanceledOnTouchOutside(false)
+            dialog.setMessage("Retrieving info, please please wait...")
+            dialog.setCancelable(true)
+            dialog.show()
 
-            val body = JSONObject(data)
-            val status = body.getString("status")
-            if (status == "OK") {
-                val rows = body.getJSONArray("rows")
-                val objectAtZero = rows.getJSONObject(0)
-                val elements = objectAtZero.getJSONArray("elements")
-                val elementAtZero = elements.getJSONObject(0)
-                if (elementAtZero.getString("status") == "OK") {
-                    val distance = elementAtZero.getJSONObject("distance")
-                    val duration = elementAtZero.getJSONObject("duration")
+            val url =
+                "https://maps.googleapis.com/maps/api/distancematrix/json?origins=${oLat},${oLong}" +
+                        "&destinations=${dLat},${dLong}" +
+                        "&units=imperial" +
+                        "&key=$key"
 
-                    val dis = distance.getString("text").split(" ")
+            val client = OkHttpClient()
+            val request = Request.Builder().url(url).build()
+            CoroutineScope(IO).launch {
+                try {
+                    val response = client.newCall(request).execute()
 
-                    if (prefs.getMetric() == "KM") {
-                        Log.d(
-                            "Est Dist = ",
-                            methods.convertIntoKms(dis[0].toDouble()) + "Km"
-                        )
-                    } else {
-                        Log.d("Est Dist", distance.getString("text"))
+                    // dismiss dialog
+                    withContext(Dispatchers.Main) {
+                        dialog.dismiss()
                     }
-                    Log.d("Est Time", duration.getString("text"))
-                } else {
-                    Toast.makeText(
-                        this@MainMapActivity,
-                        elementAtZero.getString("status"),
-                        Toast.LENGTH_LONG
-                    ).show()
+
+                    val data = response.body!!.string()
+
+                    val body = JSONObject(data)
+                    val status = body.getString("status")
+                    if (status == "OK") {
+                        val rows = body.getJSONArray("rows")
+                        val objectAtZero = rows.getJSONObject(0)
+                        val elements = objectAtZero.getJSONArray("elements")
+                        val elementAtZero = elements.getJSONObject(0)
+                        if (elementAtZero.getString("status") == "OK") {
+                            val distance = elementAtZero.getJSONObject("distance")
+                            val duration = elementAtZero.getJSONObject("duration")
+
+                            val dis = distance.getString("text").split(" ")
+
+                            // distance
+                            var actualDistance: String = if (prefs.getMetric() == "KM") {
+                                methods.convertIntoKms(dis[0].toDouble()) + "Km"
+                            } else {
+                                distance.getString("text")
+                            }
+                            // time
+                            val time = duration.getString("text")
+
+                            withContext(Dispatchers.Main) {
+                                // show info pop up
+                                methods.alertUser(
+                                    "Estimates",
+                                    "Estimated distance : $actualDistance \nEstimated time : $time",
+                                    this@MainMapActivity
+                                )
+                            }
+
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    this@MainMapActivity,
+                                    elementAtZero.getString("status"),
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@MainMapActivity, status, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        dialog.dismiss()
+                        methods.alertUser("Error", e.toString(), this@MainMapActivity)
+                    }
                 }
-            } else {
-                Toast.makeText(this@MainMapActivity, status, Toast.LENGTH_LONG).show()
             }
+        } catch (e: Exception) {
+            methods.alertUser("Error", e.toString(), this)
+        }
+    }
+
+    // get directions
+    private fun getDirections(
+        oLat: String,
+        oLong: String,
+        dLat: String,
+        dLong: String,
+        key: String
+    ) {
+        try {
+            // progress dialog
+            val dialog = ProgressDialog(this)
+            dialog.setTitle("Processing")
+            dialog.setCanceledOnTouchOutside(false)
+            dialog.setMessage("Retrieving info, please please wait...")
+            dialog.setCancelable(true)
+            dialog.show()
+
+            val url =
+                "https://maps.googleapis.com/maps/api/directions/json?origin=${oLat},${oLong}" +
+                        "&destination=${dLat},${dLong}" +
+                        "&sensor=false" +
+                        "&mode=driving" +
+                        "&key=$key"
+
+            val client = OkHttpClient()
+            val request = Request.Builder().url(url).build()
+            CoroutineScope(IO).launch {
+                try {
+                    val response = client.newCall(request).execute()
+
+                    // dismiss dialog
+                    withContext(Dispatchers.Main) {
+                        dialog.dismiss()
+                    }
+
+                    val data = response.body!!.string()
+
+                    Log.d("Dir", data)
+
+//                    val body = JSONObject(data)
+//                    val status = body.getString("status")
+//                    if (status == "OK") {
+//                        val rows = body.getJSONArray("rows")
+//                        val objectAtZero = rows.getJSONObject(0)
+//                        val elements = objectAtZero.getJSONArray("elements")
+//                        val elementAtZero = elements.getJSONObject(0)
+//                        if (elementAtZero.getString("status") == "OK") {
+//                            val distance = elementAtZero.getJSONObject("distance")
+//                            val duration = elementAtZero.getJSONObject("duration")
+//
+//                            val dis = distance.getString("text").split(" ")
+//
+//                            // distance
+//                            var actualDistance: String = if (prefs.getMetric() == "KM") {
+//                                methods.convertIntoKms(dis[0].toDouble()) + "Km"
+//                            } else {
+//                                distance.getString("text")
+//                            }
+//                            // time
+//                            val time = duration.getString("text")
+//
+//                            withContext(Dispatchers.Main) {
+//                                // show info pop up
+//                                methods.alertUser(
+//                                    "Estimates",
+//                                    "Estimated distance : $actualDistance \nEstimated time : $time",
+//                                    this@MainMapActivity
+//                                )
+//                            }
+//
+//                        } else {
+//                            withContext(Dispatchers.Main) {
+//                                Toast.makeText(
+//                                    this@MainMapActivity,
+//                                    elementAtZero.getString("status"),
+//                                    Toast.LENGTH_LONG
+//                                ).show()
+//                            }
+//
+//                        }
+//                    } else {
+//                        withContext(Dispatchers.Main) {
+//                            Toast.makeText(this@MainMapActivity, status, Toast.LENGTH_LONG).show()
+//                        }
+//                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        dialog.dismiss()
+                        methods.alertUser("Error", e.toString(), this@MainMapActivity)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            methods.alertUser("Error", e.toString(), this)
         }
     }
 }

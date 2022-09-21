@@ -4,7 +4,12 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/drawable-v24/custom_button.xml" value="0.113" />
+        <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/drawable/ic_baseline_access_time_24.xml" value="0.1255" />
+        <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/drawable/ic_baseline_alt_route_24.xml" value="0.1255" />
+        <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/drawable/ic_baseline_assistant_direction_24.xml" value="0.1255" />
+        <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/drawable/ic_baseline_favorite_24.xml" value="0.1255" />
         <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/drawable/ic_baseline_landscape_24.xml" value="0.154" />
+        <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/drawable/round_corner.xml" value="0.1255" />
         <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/drawable/roundcorner.xml" value="0.171" />
         <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/layout/actions_info_contents.xml" value="0.16414473684210526" />
         <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/layout/activity_main.xml" value="0.22" />
@@ -12,6 +17,7 @@
         <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/layout/activity_settings.xml" value="0.12072368421052632" />
         <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/layout/activity_sign_up.xml" value="0.25" />
         <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/layout/marker_info_contents.xml" value="0.18" />
+        <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/layout/snack_bar.xml" value="0.16211825860948667" />
         <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/menu/map_options_menu.xml" value="0.12072368421052632" />
         <entry key="..\:/Byro/Codes/LandmarkGuide/app/src/main/res/xml/preferences.xml" value="0.22" />
       </map>

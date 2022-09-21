@@ -18,42 +18,6 @@
         android:visibility="gone"
         tools:text="Title" />
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnDrawRoute"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:background="@drawable/custom_button"
-        android:text="Draw Route"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        android:visibility="gone" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnEstTimeDistance"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:background="@drawable/custom_button"
-        android:text="Est Time and Distance"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        android:visibility="gone" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnDirections"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:background="@drawable/custom_button"
-        android:text="Directions"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        android:visibility="gone" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -63,38 +27,42 @@
 
         <!-- estimated time and distance -->
         <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnEstTimeDistance"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/round_corner"
-            android:src="@drawable/ic_baseline_landscape_24"
+            android:src="@drawable/ic_baseline_access_time_24"
             app:cornerRadius="28dp" />
 
         <!-- draw route -->
         <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnDrawRoute"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/round_corner"
-            android:src="@drawable/ic_baseline_landscape_24"
+            android:src="@drawable/ic_baseline_alt_route_24"
             app:cornerRadius="28dp" />
 
         <!-- get directions -->
         <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnDirections"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/round_corner"
-            android:src="@drawable/ic_baseline_landscape_24"
+            android:src="@drawable/ic_baseline_assistant_direction_24"
             app:cornerRadius="28dp" />
 
         <!-- save as favorite -->
         <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnSetFav"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/round_corner"
-            android:src="@drawable/ic_baseline_landscape_24"
+            android:src="@drawable/ic_baseline_favorite_24"
             app:cornerRadius="28dp" />
 
     </LinearLayout>

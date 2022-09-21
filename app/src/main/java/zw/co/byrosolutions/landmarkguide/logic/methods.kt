@@ -5,8 +5,13 @@ import android.app.ProgressDialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.graphics.Color
 import android.os.Build
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
+import com.google.android.material.snackbar.Snackbar
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Call
@@ -21,6 +26,7 @@ import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+
 
 class methods {
     companion object {
@@ -128,7 +134,7 @@ class methods {
                     ) {
                         dialog.dismiss()
                         if (response.isSuccessful) {
-
+                            Toast.makeText(ctx, "Saved successfully", Toast.LENGTH_SHORT).show()
                         } else {
                             Toast.makeText(ctx, "Request failed", Toast.LENGTH_LONG).show()
                         }
@@ -172,6 +178,31 @@ class methods {
          */
         fun convertIntoMiles(km: Double): Double {
             return km / 1.609
+        }
+
+        // method to show distance and time snack bar
+        fun showDistanceTimeSnackBar(dis: String, time: String, v: View, ctx: Context) {
+            // create an instance of the snack bar
+            val snackBar = Snackbar.make(v, "", Snackbar.LENGTH_LONG)
+
+            val customSnackView =
+                LayoutInflater.from(ctx).inflate(R.layout.snack_bar, v as ViewGroup, false)
+
+            // set the background of the default snack bar as transparent
+            snackBar.view.setBackgroundColor(Color.TRANSPARENT)
+
+            // now change the layout of the snack bar
+            val snackBarLayout = snackBar.view
+
+            // set padding of the all corners as 0
+
+            // set padding of the all corners as 0
+            snackBarLayout.setPadding(0, 0, 0, 0)
+
+            // add the custom snack bar layout to snack bar layout
+            // snackBarLayout.addView(customSnackView, 0)
+
+            snackBar.show()
         }
     }
 }
